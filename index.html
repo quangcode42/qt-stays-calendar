@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Lịch đặt phòng</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f8fa; color: #1a1a2e; min-height: 100vh; }
+
+.header { background: #1a3c2e; color: white; padding: 20px 16px 16px; text-align: center; }
+.header h1 { font-size: 20px; font-weight: 700; }
+.header p { font-size: 13px; opacity: .75; margin-top: 4px; }
+
+.container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.cal-title { font-size: 20px; font-weight: 700; color: #1a3c2e; }
+.nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e0e0e0; background: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.nav-btn:active { transform: scale(.9); }
+
+.cal-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+.dow-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 6px; }
+.dow { text-align: center; font-size: 11px; font-weight: 700; color: #999; padding: 4px 0; }
+.days-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.day { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: default; transition: all .15s; }
+.day.booked { background: #fecaca; color: #991b1b; }
+.day.booked .dn { font-weight: 800; }
+.day.today { background: #1a3c2e; color: white; }
+.day.weekend { color: #aaa; }
+.day.empty { }
+
+.legend { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: #666; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.dot { width: 14px; height: 14px; border-radius: 4px; }
+.dot.booked { background: #fecaca; }
+.dot.free { background: #dcfce7; border: 1px solid #86efac; }
+.dot.today { background: #1a3c2e; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.stat { background: white; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.stat .num { font-size: 22px; font-weight: 800; color: #1a3c2e; }
+.stat .lbl { font-size: 11px; color: #999; margin-top: 2px; }
+
+.note { text-align: center; margin-top: 20px; font-size: 12px; color: #aaa; padding: 0 16px; line-height: 1.6; }
+.note strong { color: #1a3c2e; }
+
+.loader { text-align: center; padding: 60px 20px; color: #999; }
+.loader .spin { font-size: 40px; animation: spin 1s linear infinite; display: block; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error { text-align: center; padding: 40px 20px; }
+.retry { margin-top: 12px; padding: 10px 24px; background: #1a3c2e; color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; border-radius: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="propName">📅 Lịch đặt phòng</h1>
+  <p id="propAddr">Đang tải...</p>
+</div>
+
+<div class="container">
+  <div id="main">
+    <div class="loader"><span class="spin">🌀</span>Đang tải lịch...</div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const SUPABASE_URL = 'https://xjrlvypgnlxbbcldcmrq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqcmx2eXBnbmx4YmJjbGRjbXJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4OTc1MzcsImV4cCI6MjA4OTQ3MzUzN30.jI6dIxrNHNpPTNeenk0gf4v_UvoIMlCqEvaKd9mWUfo';
+
+// ── STATE ───────────────────────────────────────────────
+const params = new URLSearchParams(location.search);
+const propId = params.get('p');
+let bookings  = [];
+let propInfo  = null;
+let calMonth  = new Date().getMonth();
+let calYear   = new Date().getFullYear();
+
+const mNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+// ── FETCH ───────────────────────────────────────────────
+async function api(path) {
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+    }
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function load() {
+  if (!propId) {
+    document.getElementById('main').innerHTML =
+      '<div class="error">❌ Thiếu property ID trong URL<br><small>Liên hệ chủ nhà để lấy link đúng</small></div>';
+    return;
+  }
+  try {
+    const [props, bks] = await Promise.all([
+      api('properties?id=eq.' + propId + '&select=id,name,address,checkin_time,checkout_time'),
+      api('bookings?property_id=eq.' + propId + '&select=checkin_date,checkout_date&order=checkin_date')
+    ]);
+    if (!props.length) throw new Error('Không tìm thấy property');
+    propInfo = props[0];
+    bookings = bks;
+
+    document.getElementById('propName').textContent = '📅 ' + propInfo.name;
+    document.getElementById('propAddr').textContent =
+      '✅ Check-in: ' + propInfo.checkin_time + '  •  🚪 Check-out: ' + propInfo.checkout_time;
+
+    render();
+  } catch(e) {
+    document.getElementById('main').innerHTML =
+      '<div class="error"><div style="font-size:48px">❌</div><p style="margin-top:12px;color:#e63946">Lỗi tải dữ liệu</p>' +
+      '<p style="font-size:12px;color:#aaa;margin-top:6px">' + e.message + '</p>' +
+      '<button class="retry" onclick="load()">🔄 Thử lại</button></div>';
+  }
+}
+
+// ── OCCUPIED DAYS ───────────────────────────────────────
+function getOccupied() {
+  const occ = new Set();
+  bookings.forEach(b => {
+    let d = new Date(b.checkin_date);
+    const co = new Date(b.checkout_date);
+    while (d < co) {
+      if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
+        occ.add(d.getDate());
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  });
+  return occ;
+}
+
+// ── RENDER ──────────────────────────────────────────────
+function render() {
+  const occ      = getOccupied();
+  const dim      = new Date(calYear, calMonth + 1, 0).getDate();
+  let   fdow     = new Date(calYear, calMonth, 1).getDay();
+  fdow           = fdow === 0 ? 6 : fdow - 1; // Mon=0
+  const td       = new Date();
+  const isThisM  = td.getMonth() === calMonth && td.getFullYear() === calYear;
+
+  // Stats for this month
+  const bookedDays = occ.size;
+  const freeDays   = dim - bookedDays;
+
+  // Next available
+  let nextFree = null;
+  for (let day = 1; day <= dim; day++) {
+    const dd = new Date(calYear, calMonth, day);
+    if (!occ.has(day) && dd >= new Date(td.getFullYear(), td.getMonth(), td.getDate())) {
+      nextFree = day;
+      break;
+    }
+  }
+
+  let html = `
+  <div class="cal-nav">
+    <div class="cal-title">${mNames[calMonth]} ${calYear}</div>
+    <div style="display:flex;gap:8px">
+      <button class="nav-btn" onclick="prevM()">‹</button>
+      <button class="nav-btn" onclick="nextM()">›</button>
+    </div>
+  </div>
+
+  <div class="cal-card">
+    <div class="dow-row">
+      ${['T2','T3','T4','T5','T6','T7','CN'].map(d =>
+        `<div class="dow">${d}</div>`).join('')}
+    </div>
+    <div class="days-grid">`;
+
+  // Empty cells
+  for (let i = 0; i < fdow; i++) html += `<div class="day empty"></div>`;
+
+  // Days
+  for (let day = 1; day <= dim; day++) {
+    const isToday   = isThisM && td.getDate() === day;
+    const isBooked  = occ.has(day);
+    const dow       = (fdow + day - 1) % 7;
+    const isWeekend = dow >= 5;
+
+    let cls = 'day';
+    if (isToday)        cls += ' today';
+    else if (isBooked)  cls += ' booked';
+    else if (isWeekend) cls += ' weekend';
+
+    html += `<div class="${cls}"><span class="dn">${day}</span></div>`;
+  }
+
+  html += `</div></div>`;
+
+  // Legend
+  html += `
+  <div class="legend">
+    <div class="legend-item"><div class="dot booked"></div><span>Đã có khách</span></div>
+    <div class="legend-item"><div class="dot free"></div><span>Còn trống</span></div>
+    <div class="legend-item"><div class="dot today"></div><span>Hôm nay</span></div>
+  </div>`;
+
+  // Stats
+  html += `
+  <div class="stats">
+    <div class="stat">
+      <div class="num" style="color:#e63946">${bookedDays}</div>
+      <div class="lbl">Ngày đã đặt</div>
+    </div>
+    <div class="stat">
+      <div class="num" style="color:#16a34a">${freeDays}</div>
+      <div class="lbl">Ngày còn trống</div>
+    </div>
+  </div>`;
+
+  // Next free
+  if (nextFree) {
+    html += `
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:12px;margin-top:12px;text-align:center">
+      <div style="font-size:12px;color:#666">Ngày trống gần nhất trong tháng</div>
+      <div style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px">
+        📅 ${String(nextFree).padStart(2,'0')}/${String(calMonth+1).padStart(2,'0')}/${calYear}
+      </div>
+    </div>`;
+  }
+
+  // Note
+  html += `
+  <div class="note">
+    <strong>Liên hệ đặt phòng:</strong><br>
+    Lịch chỉ hiển thị ngày trống/bận.<br>
+    Vui lòng liên hệ chủ nhà để biết giá và xác nhận booking.
+  </div>`;
+
+  document.getElementById('main').innerHTML = html;
+}
+
+function prevM() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  render();
+}
+function nextM() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  render();
+}
+
+load();
+</script>
+</body>
+</html>
