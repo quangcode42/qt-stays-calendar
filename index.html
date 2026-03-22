@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>QT Villa Mũi Né — Lịch & Thông tin</title>
+<title>QT Stays — Lịch & Thông tin</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
@@ -58,13 +58,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
 .loader{text-align:center;padding:60px 20px;color:#999}
 .spin{font-size:40px;animation:spin 1s linear infinite;display:block;margin-bottom:12px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.error-box{text-align:center;padding:40px 20px}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1 id="propName">🏖️ QT Villa Mũi Né</h1>
-  <div class="sub" id="propAddr">Chế Lan Viên - Mũi Né</div>
+  <h1 id="propName">🏖️ QT Stays</h1>
+  <div class="sub" id="propAddr">Đang tải...</div>
   <div class="badge">🌴 Cẩm nang Sale</div>
 </div>
 
@@ -86,35 +87,27 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
     <div class="commission-box">
       <div style="font-size:14px;font-weight:800;color:#92400e;margin-bottom:6px">💚 HOA HỒNG CHO SALE</div>
       <div style="font-size:13px;color:#78350f">Giới thiệu khách đặt villa thành công, sale được hưởng:</div>
-      <div style="font-size:36px;font-weight:900;color:#d97706;margin:4px 0">10%</div>
+      <div style="font-size:36px;font-weight:900;color:#d97706;margin:4px 0" id="commissionRate">10%</div>
       <div style="font-size:13px;color:#78350f">trên tổng giá trị booking</div>
     </div>
-
-    <div class="section-title">💰 Bảng giá thuê villa</div>
-    <div class="price-card">
-      <div class="price-header">🗓️ Giá thường (không phải mùa hè)</div>
-      <div class="price-row"><span class="period">☀️ Chủ nhật — Thứ 5</span><span class="price">8.000.000 ₫</span></div>
-      <div class="price-row hl"><span class="period">🔥 Thứ 6 — Thứ 7</span><span class="price">10.000.000 ₫</span></div>
-      <div class="price-row hl"><span class="period">🎉 Lễ, Tết</span><span class="price">15.000.000 ₫</span></div>
-    </div>
-    <div class="price-card">
-      <div class="price-header">☀️ Giá hè (Tháng 6, 7, 8)</div>
-      <div class="price-row"><span class="period">☀️ Chủ nhật — Thứ 5</span><span class="price">10.000.000 ₫</span></div>
-      <div class="price-row hl"><span class="period">🔥 Thứ 6 — Thứ 7</span><span class="price">12.000.000 ₫</span></div>
-    </div>
-    <div class="price-card">
-      <div class="price-header">➕ Phụ phí</div>
-      <div class="price-row"><span class="period">⏰ Check-in sớm / trễ</span><span class="price">400k/giờ</span></div>
-      <div class="price-row"><span class="period">🚿 Check-out sau 17h</span><span class="price">100% giá thuê</span></div>
-      <div class="price-row"><span class="period">👤 Thêm người</span><span class="price">300k/khách</span></div>
-      <div class="price-row"><span class="period">🧹 Phí vệ sinh</span><span class="price">300k — 1tr</span></div>
-    </div>
-    <div class="price-card">
-      <div class="price-header">🛵 Dịch vụ thêm (có phí)</div>
-      <div class="price-row"><span class="period">🛵 Xe máy</span><span class="price">150k/chiếc/ngày</span></div>
-      <div class="price-row"><span class="period">🚙 Xe Jeep 7 chỗ</span><span class="price">600k/chiếc</span></div>
-      <div class="price-row"><span class="period">🚗 Xe 4-7 chỗ</span><span class="price">Tuỳ nhu cầu</span></div>
-      <div class="price-row"><span class="period">🍽️ Đặt tiệc</span><span class="price">Tuỳ nhu cầu</span></div>
+    <div id="priceContent">
+      <div class="price-card">
+        <div class="price-header">🗓️ Giá thường (không phải mùa hè)</div>
+        <div class="price-row"><span class="period">☀️ Chủ nhật — Thứ 5</span><span class="price">8.000.000 ₫</span></div>
+        <div class="price-row hl"><span class="period">🔥 Thứ 6 — Thứ 7</span><span class="price">10.000.000 ₫</span></div>
+        <div class="price-row hl"><span class="period">🎉 Lễ, Tết</span><span class="price">15.000.000 ₫</span></div>
+      </div>
+      <div class="price-card">
+        <div class="price-header">☀️ Giá hè (Tháng 6, 7, 8)</div>
+        <div class="price-row"><span class="period">☀️ Chủ nhật — Thứ 5</span><span class="price">10.000.000 ₫</span></div>
+        <div class="price-row hl"><span class="period">🔥 Thứ 6 — Thứ 7</span><span class="price">12.000.000 ₫</span></div>
+      </div>
+      <div class="price-card">
+        <div class="price-header">➕ Phụ phí</div>
+        <div class="price-row"><span class="period">⏰ Check-in sớm / trễ</span><span class="price">400k/giờ</span></div>
+        <div class="price-row"><span class="period">👤 Thêm người</span><span class="price">300k/khách</span></div>
+        <div class="price-row"><span class="period">🧹 Phí vệ sinh</span><span class="price">300k — 1tr</span></div>
+      </div>
     </div>
     <button class="copy-btn" onclick="copyPrice()">📋 Copy bảng giá gửi khách</button>
   </div>
@@ -124,30 +117,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
   <div class="container">
     <div class="contact-card">
       <div style="font-size:16px;font-weight:800;margin-bottom:6px">📞 Liên hệ đặt phòng</div>
-      <div style="font-size:26px;font-weight:900;color:#4ade80;letter-spacing:1px">035.633.0820</div>
-      <div style="font-size:12px;opacity:.7;margin-top:4px">Chị Dung — Hỗ trợ 7/7</div>
+      <div id="contactPhone" style="font-size:26px;font-weight:900;color:#4ade80;letter-spacing:1px">035.633.0820</div>
+      <div id="contactName" style="font-size:12px;opacity:.7;margin-top:4px">Hỗ trợ 7/7</div>
     </div>
-    <div class="info-card">
-      <div class="info-header">📍 QT Villa Mũi Né</div>
-      <div class="info-row"><div class="key">Địa chỉ</div><div class="val">Chế Lan Viên, Phường Mũi Né, Tỉnh Lâm Đồng</div></div>
-      <div class="info-row"><div class="key">Diện tích</div><div class="val"><strong>1.000 m²</strong></div></div>
-      <div class="info-row"><div class="key">Phòng ngủ</div><div class="val"><strong>5 phòng</strong> — 7 giường lớn 2m×2m</div></div>
-      <div class="info-row"><div class="key">Nhà vệ sinh</div><div class="val"><strong>6 WC</strong></div></div>
-      <div class="info-row"><div class="key">Sức chứa</div><div class="val"><strong>Tối đa 20 khách</strong> (14 lớn + 6 trẻ em)</div></div>
-      <div class="info-row"><div class="key">Cách biển</div><div class="val">🌊 View biển — <strong>100m</strong> tới bãi biển (1 phút đi bộ)</div></div>
-      <div class="info-row"><div class="key">Check-in</div><div class="val"><strong>14:00</strong></div></div>
-      <div class="info-row"><div class="key">Check-out</div><div class="val"><strong>11:30</strong></div></div>
-    </div>
-    <div class="info-card">
-      <div class="info-header">✨ Tiện ích nổi bật</div>
-      <div class="info-row"><div class="key">Hồ bơi</div><div class="val">🏊 Hồ bơi riêng</div></div>
-      <div class="info-row"><div class="key">BBQ</div><div class="val">🔥 Khu BBQ rộng lớn</div></div>
-      <div class="info-row"><div class="key">Thể thao</div><div class="val">🏐 Sân bóng chuyền bãi cát biển</div></div>
-      <div class="info-row"><div class="key">Giải trí</div><div class="val">🎤 Loa karaoke miễn phí, bàn bi da, tivi</div></div>
-      <div class="info-row"><div class="key">Đỗ xe</div><div class="val">🚗 Sân rộng đậu ô tô</div></div>
-      <div class="info-row"><div class="key">Cây xanh</div><div class="val">🌴 Nhiều cây xanh, cây ăn trái, góc check-in đẹp</div></div>
-      <div class="info-row"><div class="key">Bếp</div><div class="val">👨‍🍳 Bếp lớn, dụng cụ đầy đủ, tủ lạnh lớn</div></div>
-      <div class="info-row"><div class="key">Gần đó</div><div class="val">🛒 Chợ, quán ăn, tạp hoá, điểm tham quan<br>🦞 Hải sản tươi tận ghe mùa hè!</div></div>
+    <div id="infoContent">
+      <div class="info-card">
+        <div class="info-header">📍 Thông tin property</div>
+        <div class="info-row"><div class="key">Tên</div><div class="val" id="infoName">—</div></div>
+        <div class="info-row"><div class="key">Địa chỉ</div><div class="val" id="infoAddr">—</div></div>
+        <div class="info-row"><div class="key">Check-in</div><div class="val" id="infoCI">14:00</div></div>
+        <div class="info-row"><div class="key">Check-out</div><div class="val" id="infoCO">11:30</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -156,15 +136,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
   <div class="container">
     <div class="info-card">
       <div class="info-header">❌ Nội quy quan trọng</div>
-      <div class="info-row"><div class="key">Cọc</div><div class="val">💰 Mất cọc 100% khi khách không đến</div></div>
-      <div class="info-row"><div class="key">Huỷ phòng</div><div class="val">⭕️ Huỷ ngang hoặc không đến đúng ngày: <strong>không hoàn cọc</strong></div></div>
-      <div class="info-row"><div class="key">2 đêm</div><div class="val">⭕️ Thuê 2 đêm, huỷ hoặc chỉ ở 1 đêm: không hoàn cọc đêm 2</div></div>
-      <div class="info-row"><div class="key">Số khách</div><div class="val">⭕️ Báo đúng số lượng — vượt quy định có thể bị từ chối</div></div>
-      <div class="info-row"><div class="key">Chất kích thích</div><div class="val">❌ Nghiêm cấm tuyệt đối</div></div>
-      <div class="info-row"><div class="key">Thú cưng</div><div class="val">🆘 Không mang theo — vi phạm: không hoàn cọc</div></div>
-      <div class="info-row"><div class="key">Loa kéo</div><div class="val">❌ Không dùng sau 22h</div></div>
-      <div class="info-row"><div class="key">Hút thuốc</div><div class="val">❌ Không hút trong phòng</div></div>
-      <div class="info-row"><div class="key">CCCD</div><div class="val">⭕️ Cung cấp mặt trước CCCD để làm thẻ lưu trú</div></div>
+      <div id="rulesContent" style="padding:12px 16px;font-size:13px;line-height:1.8;color:#333">
+        Đang tải nội quy...
+      </div>
     </div>
     <button class="copy-btn" onclick="copyRules()">📋 Copy nội quy gửi khách</button>
   </div>
@@ -173,9 +147,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e}
 <script>
 const SUPABASE_URL='https://xjrlvypgnlxbbcldcmrq.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqcmx2eXBnbmx4YmJjbGRjbXJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4OTc1MzcsImV4cCI6MjA4OTQ3MzUzN30.jI6dIxrNHNpPTNeenk0gf4v_UvoIMlCqEvaKd9mWUfo';
+
 const params=new URLSearchParams(location.search);
 const propId=params.get('p');
-let bookings=[],calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
+let bookings=[],propInfo=null;
+let calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
 const mNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
 function showTab(id){
@@ -187,25 +163,54 @@ function showTab(id){
 }
 
 async function api(path){
-  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  });
   if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 
 async function load(){
-  if(!propId){document.getElementById('cal-content').innerHTML='<div style="text-align:center;padding:40px;color:#e63946">❌ Thiếu property ID<br><small>Liên hệ chủ nhà lấy link đúng</small></div>';return;}
+  if(!propId){
+    document.getElementById('cal-content').innerHTML=
+      '<div class="error-box">❌ Thiếu property ID<br><small>Liên hệ chủ nhà lấy link đúng</small></div>';
+    return;
+  }
   try{
     const[props,bks]=await Promise.all([
-      api('properties?id=eq.'+propId+'&select=id,name,address,checkin_time,checkout_time'),
+      api('properties?id=eq.'+propId+'&select=id,name,address,phone,contact_name,checkin_time,checkout_time,rules'),
       api('bookings?property_id=eq.'+propId+'&select=checkin_date,checkout_date&order=checkin_date')
     ]);
     if(!props.length) throw new Error('Không tìm thấy property');
-    const p=props[0]; bookings=bks;
-    document.getElementById('propName').textContent='🏖️ '+p.name;
-    document.getElementById('propAddr').textContent='Check-in: '+p.checkin_time+' • Check-out: '+p.checkout_time;
+    propInfo=props[0]; bookings=bks;
+
+    // Cập nhật UI
+    document.getElementById('propName').textContent='🏖️ '+propInfo.name;
+    document.getElementById('propAddr').textContent=
+      'Check-in: '+propInfo.checkin_time+' • Check-out: '+propInfo.checkout_time;
+    document.getElementById('contactPhone').textContent=propInfo.phone||'Liên hệ chủ nhà';
+    document.getElementById('contactName').textContent=(propInfo.contact_name||'')+' — Hỗ trợ 7/7';
+    document.getElementById('infoName').textContent=propInfo.name;
+    document.getElementById('infoAddr').textContent=propInfo.address||'—';
+    document.getElementById('infoCI').textContent=propInfo.checkin_time||'14:00';
+    document.getElementById('infoCO').textContent=propInfo.checkout_time||'11:30';
+
+    // Nội quy
+    const rules=propInfo.rules||'';
+    if(rules){
+      const lines=rules.split('\n').filter(l=>l.trim());
+      document.getElementById('rulesContent').innerHTML=
+        lines.map(l=>`<div style="padding:4px 0;border-bottom:1px solid #f5f5f5">⭕️ ${l}</div>`).join('');
+    } else {
+      document.getElementById('rulesContent').textContent='Chưa có nội quy';
+    }
+
     renderCal();
   }catch(e){
-    document.getElementById('cal-content').innerHTML='<div style="text-align:center;padding:40px"><div style="font-size:48px">❌</div><p style="color:#e63946;margin-top:12px">'+e.message+'</p><button onclick="load()" style="margin-top:12px;padding:10px 24px;background:#1a3c2e;color:white;border:none;border-radius:20px;cursor:pointer">🔄 Thử lại</button></div>';
+    document.getElementById('cal-content').innerHTML=
+      '<div class="error-box"><div style="font-size:48px">❌</div>'+
+      '<p style="color:#e63946;margin-top:12px">'+e.message+'</p>'+
+      '<button onclick="load()" style="margin-top:12px;padding:10px 24px;background:#1a3c2e;color:white;border:none;border-radius:20px;cursor:pointer">🔄 Thử lại</button></div>';
   }
 }
 
@@ -213,7 +218,10 @@ function getOcc(){
   const occ=new Set();
   bookings.forEach(b=>{
     let d=new Date(b.checkin_date);const co=new Date(b.checkout_date);
-    while(d<co){if(d.getMonth()===calMonth&&d.getFullYear()===calYear)occ.add(d.getDate());d.setDate(d.getDate()+1);}
+    while(d<co){
+      if(d.getMonth()===calMonth&&d.getFullYear()===calYear)occ.add(d.getDate());
+      d.setDate(d.getDate()+1);
+    }
   });
   return occ;
 }
@@ -223,24 +231,52 @@ function renderCal(){
   let fdow=new Date(calYear,calMonth,1).getDay();fdow=fdow===0?6:fdow-1;
   const td=new Date(),isCur=td.getMonth()===calMonth&&td.getFullYear()===calYear;
   let nextFree=null;
-  for(let d=1;d<=dim;d++){const dd=new Date(calYear,calMonth,d);if(!occ.has(d)&&dd>=new Date(td.getFullYear(),td.getMonth(),td.getDate())){nextFree=d;break;}}
+  for(let d=1;d<=dim;d++){
+    const dd=new Date(calYear,calMonth,d);
+    if(!occ.has(d)&&dd>=new Date(td.getFullYear(),td.getMonth(),td.getDate())){nextFree=d;break;}
+  }
 
-  let h=`<div class="cal-nav"><div class="cal-title">${mNames[calMonth]} ${calYear}</div><div style="display:flex;gap:8px"><button class="nav-btn" onclick="prevM()">‹</button><button class="nav-btn" onclick="nextM()">›</button></div></div>
-  <div class="cal-card"><div class="dow-row">${['T2','T3','T4','T5','T6','T7','CN'].map(d=>`<div class="dow">${d}</div>`).join('')}</div><div class="days-grid">`;
+  let h=`<div class="cal-nav">
+    <div class="cal-title">${mNames[calMonth]} ${calYear}</div>
+    <div style="display:flex;gap:8px">
+      <button class="nav-btn" onclick="prevM()">‹</button>
+      <button class="nav-btn" onclick="nextM()">›</button>
+    </div>
+  </div>
+  <div class="cal-card">
+    <div class="dow-row">${['T2','T3','T4','T5','T6','T7','CN'].map(d=>`<div class="dow">${d}</div>`).join('')}</div>
+    <div class="days-grid">`;
+
   for(let i=0;i<fdow;i++) h+=`<div class="day"></div>`;
   for(let day=1;day<=dim;day++){
     const isT=isCur&&td.getDate()===day,isB=occ.has(day),dw=(fdow+day-1)%7;
     h+=`<div class="day${isT?' today':isB?' booked':' free'}${dw>=5?' weekend':''}"><span class="dn">${day}</span></div>`;
   }
+
   h+=`</div></div>
-  <div class="legend"><div class="leg"><div class="ldot" style="background:#fee2e2"></div>Đã đặt</div><div class="leg"><div class="ldot" style="background:#f0fdf4;border:1px solid #86efac"></div>Trống</div><div class="leg"><div class="ldot" style="background:#1a3c2e"></div>Hôm nay</div></div>
+  <div class="legend">
+    <div class="leg"><div class="ldot" style="background:#fee2e2"></div>Đã đặt</div>
+    <div class="leg"><div class="ldot" style="background:#f0fdf4;border:1px solid #86efac"></div>Trống</div>
+    <div class="leg"><div class="ldot" style="background:#1a3c2e"></div>Hôm nay</div>
+  </div>
   <div class="stats-row">
     <div class="stat"><div class="n" style="color:#e63946">${occ.size}</div><div class="l">Đã đặt</div></div>
     <div class="stat"><div class="n" style="color:#16a34a">${dim-occ.size}</div><div class="l">Còn trống</div></div>
     <div class="stat"><div class="n" style="color:#1a3c2e">${dim}</div><div class="l">Tổng ngày</div></div>
   </div>`;
-  if(nextFree) h+=`<div class="next-free"><div style="font-size:12px;color:#666">📅 Ngày trống gần nhất</div><div style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px">${String(nextFree).padStart(2,'0')}/${String(calMonth+1).padStart(2,'0')}/${calYear}</div></div>`;
-  h+=`<p style="text-align:center;font-size:11px;color:#bbb;margin-top:12px">Lịch tự động cập nhật khi có booking mới.<br>Liên hệ <strong style="color:#1a3c2e">035.633.0820</strong> để đặt phòng.</p>`;
+
+  if(nextFree) h+=`<div class="next-free">
+    <div style="font-size:12px;color:#666">📅 Ngày trống gần nhất</div>
+    <div style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px">
+      ${String(nextFree).padStart(2,'0')}/${String(calMonth+1).padStart(2,'0')}/${calYear}
+    </div>
+  </div>`;
+
+  h+=`<p style="text-align:center;font-size:11px;color:#bbb;margin-top:12px">
+    Lịch tự động cập nhật khi có booking mới.<br>
+    Liên hệ <strong style="color:#1a3c2e">${propInfo?.phone||''}</strong> để đặt phòng.
+  </p>`;
+
   document.getElementById('cal-content').innerHTML=h;
 }
 
@@ -248,13 +284,40 @@ function prevM(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
 function nextM(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
 
 function doCopy(txt,msg){
-  const fn=()=>{const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('✅ '+msg);};
+  const fn=()=>{
+    const t=document.createElement('textarea');t.value=txt;
+    document.body.appendChild(t);t.select();
+    document.execCommand('copy');document.body.removeChild(t);
+    alert('✅ '+msg);
+  };
   navigator.clipboard?navigator.clipboard.writeText(txt).then(()=>alert('✅ '+msg)).catch(fn):fn();
 }
 
-function copyPrice(){doCopy(`💰 BẢNG GIÁ QT VILLA MŨI NÉ\n\n🗓️ GIÁ THƯỜNG:\n• CN — Thứ 5: 8.000.000₫/đêm\n• Thứ 6 — Thứ 7: 10.000.000₫/đêm\n• Lễ, Tết: 15.000.000₫/đêm\n\n☀️ GIÁ HÈ (Tháng 6,7,8):\n• CN — Thứ 5: 10.000.000₫/đêm\n• Thứ 6 — Thứ 7: 12.000.000₫/đêm\n\n➕ PHỤ PHÍ:\n• Check-in sớm/trễ: 400k/giờ\n• Thêm người: 300k/khách\n• Phí vệ sinh (nếu không tự dọn): 300k-1tr\n\n📞 Đặt phòng: 035.633.0820 (Chị Dung)`,'Đã copy bảng giá!');}
+function copyPrice(){
+  const name=propInfo?.name||'QT Stays';
+  const phone=propInfo?.phone||'';
+  doCopy(
+    `💰 BẢNG GIÁ ${name.toUpperCase()}\n\n`+
+    `🗓️ GIÁ THƯỜNG:\n• CN — Thứ 5: 8.000.000₫/đêm\n• Thứ 6 — Thứ 7: 10.000.000₫/đêm\n• Lễ, Tết: 15.000.000₫/đêm\n\n`+
+    `☀️ GIÁ HÈ (Tháng 6,7,8):\n• CN — Thứ 5: 10.000.000₫/đêm\n• Thứ 6 — Thứ 7: 12.000.000₫/đêm\n\n`+
+    `➕ PHỤ PHÍ:\n• Check-in sớm/trễ: 400k/giờ\n• Thêm người: 300k/khách\n• Phí vệ sinh: 300k-1tr\n\n`+
+    `📞 Đặt phòng: ${phone}`,
+    'Đã copy bảng giá!'
+  );
+}
 
-function copyRules(){doCopy(`❌ NỘI QUY QT VILLA MŨI NÉ\n\n♻️ Mất cọc 100% khi huỷ hoặc không đến\n⛔ Thêm người: 300.000/khách\n⛔️ Thêm giờ: 400.000/giờ (báo sớm)\n🧹 Phí vệ sinh 300k-1tr nếu không tự dọn BBQ, bếp\n🛏️ Làm ướt dơ chăn ga: 500.000₫\n💔 Hư hỏng tài sản: bồi thường theo giá hiện hành\n⭕️ Không đến đúng ngày/huỷ ngang: không hoàn cọc\n⭕️ Cung cấp CCCD để làm thẻ lưu trú\n⭕️ Báo đúng số lượng khách\n❌ Nghiêm cấm chất gây nghiện - kích thích\n🆘 Không mang thú nuôi\n❌ Không dùng loa kéo sau 22h\n❌ Không hút thuốc trong phòng\n\n📞 Hỗ trợ: 035.633.0820 (Chị Dung)\n🌺 CHÚC QUÝ KHÁCH CÓ KỲ NGHỈ VUI VẺ`,'Đã copy nội quy!');}
+function copyRules(){
+  const rules=propInfo?.rules||'';
+  const name=propInfo?.name||'QT Stays';
+  const phone=propInfo?.phone||'';
+  const contact=propInfo?.contact_name||'';
+  doCopy(
+    `❌ NỘI QUY ${name.toUpperCase()}\n\n`+
+    rules.split('\n').filter(l=>l.trim()).map(l=>`⭕️ ${l}`).join('\n')+
+    `\n\n📞 Hỗ trợ: ${phone} (${contact})\n🌺 CHÚC QUÝ KHÁCH CÓ KỲ NGHỈ VUI VẺ`,
+    'Đã copy nội quy!'
+  );
+}
 
 load();
 </script>
