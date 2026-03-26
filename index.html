@@ -322,7 +322,7 @@ let pricingData=[];
 async function loadPricing(){
   if(!propId) return;
   try{
-    const prices=await api('pricing?property_id=eq.'+propId+'&order=sort_order&active=eq.true');
+    const prices=await api('pricing?property_id=eq.'+propId+'&active=eq.true&order=sort_order');
     pricingData=prices;
     if(!prices.length){
       document.getElementById('priceContent').innerHTML=
