@@ -254,7 +254,7 @@ async function loadPricing(){
   if(!propId) return;
   try{
     // Dùng select để tránh lỗi RLS
-    const prices=await api('pricing?select=label,description,price,sort_order&property_id=eq.'+propId+'&active=eq.true&order=sort_order');
+    const prices=await api('pricing?select=label,description,price,sort_order&property_id=eq.'+propId+'&active=eq.true&order=sort_order.asc');
     pricingData=prices;
     if(!prices||!prices.length){
       document.getElementById('priceContent').innerHTML=
