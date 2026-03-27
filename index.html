@@ -198,9 +198,8 @@ function showTab(id){
 }
 
 async function api(path){
-  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
-  });
+  const sep=path.includes('?')?'&':'?';
+  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path+sep+'apikey='+SUPABASE_KEY);
   if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
@@ -254,8 +253,7 @@ async function loadPricing(){
   if(!propId) return;
   try{
     // Dùng select để tránh lỗi RLS
-    // Thay đổi dòng này:
-    const prices = await api('pricing?select=label,description,price,sort_order&property_id=eq.'+propId+'&active=eq.true&order=sort_order.asc');
+    const prices=await api('pricing?select=label,description,price,sort_order&property_id=eq.'+propId+'&active=eq.true&order=sort_order');
     pricingData=prices;
     if(!prices||!prices.length){
       document.getElementById('priceContent').innerHTML=
