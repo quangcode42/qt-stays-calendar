@@ -407,7 +407,7 @@ function copyInfo(){
 function copyRules(){
   const p=propInfo||{};
   const rules=(p.rules||'').split('\n').filter(l=>l.trim()).map(l=>`⭕️ ${l}`).join('\n');
-  doCopy(`❌ NỘI QUY ${(p.name||'').toUpperCase()}\n\n${rules}\n\n📞 ${p.phone||''} (${p.contact_name||})\n🌺 CHÚC QUÝ KHÁCH CÓ KỲ NGHỈ VUI VẺ`,'Đã copy nội quy!');
+  doCopy(`❌ NỘI QUY ${(p.name||'').toUpperCase()}\n\n${rules}\n\n📞 ${p.phone||''} (${p.contact_name||''})\n🌺 CHÚC QUÝ KHÁCH CÓ KỲ NGHỈ VUI VẺ`,'Đã copy nội quy!');
 }
 
 load();
