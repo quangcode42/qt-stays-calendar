@@ -228,7 +228,23 @@ async function load(){
     document.getElementById('infoAddr').textContent=propInfo.address||'—';
     document.getElementById('infoCI').textContent='⏰ '+(propInfo.checkin_time||'14:00');
     document.getElementById('infoCO').textContent='⏰ '+(propInfo.checkout_time||'11:30');
-
+    // Tiện ích
+    const amenities=(propInfo.amenities||'').split('\n').filter(l=>l.trim());
+    document.getElementById('amenitiesContent').innerHTML=amenities.length
+      ? amenities.map(a=>`<div class="chip">${a}</div>`).join('')
+      : '<div style="padding:12px;color:#999;font-size:13px">Chưa có thông tin</div>';
+    
+    // Vị trí
+    const distances=(propInfo.distances||'').split('\n').filter(l=>l.trim());
+    document.getElementById('distancesContent').innerHTML=distances.length
+      ? distances.map(d=>`<div class="card-row"><div class="val">📍 ${d}</div></div>`).join('')
+      : '<div class="card-row"><div class="val" style="color:#999">Chưa có thông tin</div></div>';
+    
+    // Dịch vụ thêm
+    const extras=(propInfo.extra_services||'').split('\n').filter(l=>l.trim());
+    document.getElementById('extraContent').innerHTML=extras.length
+      ? extras.map(e=>`<div class="card-row"><div class="val">🔸 ${e}</div></div>`).join('')
+      : '<div class="card-row"><div class="val" style="color:#999">Chưa có thông tin</div></div>';
     // Nội quy
     const rules=propInfo.rules||'';
     if(rules){
