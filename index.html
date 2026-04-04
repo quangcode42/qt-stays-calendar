@@ -308,8 +308,9 @@ async function load() {
 async function loadPricing() {
   try {
     const prices = await api(
-      'pricing?property_id=eq.' + propId +
-      '&active=eq.true&order=sort_order&select=label,description,price,sort_order'
+      'pricing?select=label,description,price,sort_order' +
+      '&property_id=eq.' + propId +
+      '&active=eq.true&order=sort_order'
     );
     pricingData = prices || [];
 
