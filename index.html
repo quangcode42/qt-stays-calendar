@@ -306,34 +306,52 @@ async function load() {
 
 // ─── Bảng giá ──────────────────────────────────────────────
 async function loadPricing() {
-  try {
-    const prices = await api(
-      'pricing?select=label,description,price,sort_order' +
-      '&property_id=eq.' + propId +
-      '&active=eq.true&order=sort_order'
-    );
-    pricingData = prices || [];
+  const el = document.getElementById('priceContent');
+  // Thử lần lượt từ đơn giản đến đầy đủ để tìm nguyên nhân 400
+  const attempts = [
+    { label: 'select *',            path: 'pricing?select=*&property_id=eq.' + propId },
+    { label: 'filter active',       path: 'pricing?select=*&property_id=eq.' + propId + '&active=eq.true' },
+    { label: 'full query + order',  path: 'pricing?select=label,description,price,sort_order&property_id=eq.' + propId + '&active=eq.true&order=sort_order' },
+  ];
 
-    if (!pricingData.length) {
-      document.getElementById('priceContent').innerHTML =
-        '<p style="text-align:center;color:#999;padding:20px">Chưa có bảng giá</p>';
-      return;
+  for (const attempt of attempts) {
+    try {
+      const r = await fetch(
+        SUPABASE_URL + '/rest/v1/' + attempt.path + '&apikey=' + SUPABASE_KEY,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const body = await r.text();
+      if (!r.ok) {
+        // Hiện lỗi chi tiết từ Supabase để biết nguyên nhân chính xác
+        el.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px;font-size:12px;margin-bottom:8px">
+          <b>❌ Thất bại [${attempt.label}]</b> — HTTP ${r.status}<br>
+          <code style="word-break:break-all;color:#c0392b">${body}</code>
+        </div>`;
+        continue; // thử attempt tiếp theo
+      }
+      // Thành công — parse và render
+      const prices = JSON.parse(body);
+      pricingData = prices || [];
+      if (!pricingData.length) {
+        el.innerHTML = '<p style="text-align:center;color:#999;padding:20px">Chưa có bảng giá</p>';
+        return;
+      }
+      let h = '<div class="card"><div class="card-header" style="background:#1a3c2e">💰 Bảng giá</div>';
+      pricingData.forEach(p => {
+        h += `<div class="price-row">
+          <div>
+            <div class="period">${p.label || p.name || JSON.stringify(p)}</div>
+            ${p.description ? `<div style="font-size:11px;color:#aaa">${p.description}</div>` : ''}
+          </div>
+          <span class="price">${fmtMoney(p.price || p.amount || 0)}/đêm</span>
+        </div>`;
+      });
+      h += '</div>';
+      el.innerHTML = h;
+      return; // xong
+    } catch (e) {
+      el.innerHTML += `<div style="color:red;font-size:12px">Exception [${attempt.label}]: ${e.message}</div>`;
     }
-    let h = '<div class="card"><div class="card-header" style="background:#1a3c2e">💰 Bảng giá</div>';
-    pricingData.forEach(p => {
-      h += `<div class="price-row">
-        <div>
-          <div class="period">${p.label}</div>
-          ${p.description ? `<div style="font-size:11px;color:#aaa">${p.description}</div>` : ''}
-        </div>
-        <span class="price">${fmtMoney(p.price)}/đêm</span>
-      </div>`;
-    });
-    h += '</div>';
-    document.getElementById('priceContent').innerHTML = h;
-  } catch (e) {
-    document.getElementById('priceContent').innerHTML =
-      `<p class="err">Lỗi tải bảng giá: ${e.message}</p>`;
   }
 }
 
