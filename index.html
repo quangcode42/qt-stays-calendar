@@ -219,6 +219,18 @@ function priceForDate(date) {
   const month = date.getMonth() + 1;
   const isSummer = month === 6 || month === 7 || month === 8;
   const isWeekend = day === 5 || day === 6;
+
+  // T6/T7 ngày thường có thể được gán giá riêng (weekend_fri/weekend_sat) --
+  // ưu tiên hơn tier "weekend" gộp nếu chủ nhà đã tách; không có thì rơi về
+  // weekend gộp như cũ, property nào chưa tách vẫn hoạt động y hệt trước đây.
+  if (!isSummer) {
+    const specificKey = day === 5 ? 'weekend_fri' : day === 6 ? 'weekend_sat' : null;
+    if (specificKey) {
+      const specific = pricingData.find(p => p.tier_key === specificKey);
+      if (specific) return specific.price;
+    }
+  }
+
   const tierKey = isSummer
     ? (isWeekend ? 'summer_weekend' : 'summer_weekday')
     : (isWeekend ? 'weekend' : 'weekday');
