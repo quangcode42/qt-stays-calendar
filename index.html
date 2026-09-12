@@ -204,8 +204,25 @@ function fmtMoneyShort(n) {
 }
 
 // Giá áp dụng cho 1 ngày cụ thể, theo đúng logic BookingForm.tsx bên qt-villa-web
-// (findHolidayPrice + tier_key) -- ngày lễ khai báo start_date/end_date luôn ưu
-// tiên trước, sau đó mới tới tier weekday/weekend/summer_weekday/summer_weekend.
+// (findHolidayPrice + months/weekdays) -- ngày lễ khai báo start_date/end_date
+// luôn ưu tiên trước, sau đó xét từng dòng theo đúng sort_order (kéo-thả trong
+// app), dòng nào khớp cả tháng lẫn thứ trước thì dùng giá đó.
+function isoWeekday(date) {
+  const day = date.getDay(); // 0=CN...6=T7
+  return day === 0 ? 7 : day; // ISO: T2=1...CN=7
+}
+
+// Dòng chưa khai weekdays (cả months lẫn weekdays đều trống) coi là chưa cấu
+// hình -- không khớp ngày nào, giống hệt hành vi cũ khi tier_key = null.
+function matchesRecurring(p, month, weekday) {
+  const hasMonths = Array.isArray(p.months) && p.months.length > 0;
+  const hasWeekdays = Array.isArray(p.weekdays) && p.weekdays.length > 0;
+  if (!hasMonths && !hasWeekdays) return false;
+  const monthOk = !hasMonths || p.months.includes(month);
+  const weekdayOk = !hasWeekdays || p.weekdays.includes(weekday);
+  return monthOk && weekdayOk;
+}
+
 function priceForDate(date) {
   const iso = date.getFullYear() + '-' +
     String(date.getMonth() + 1).padStart(2, '0') + '-' +
@@ -215,27 +232,9 @@ function priceForDate(date) {
     p.start_date && p.end_date && iso >= p.start_date && iso <= p.end_date);
   if (holiday) return holiday.price;
 
-  const day = date.getDay(); // 0=CN ... 5=T6, 6=T7
   const month = date.getMonth() + 1;
-  const isSummer = month === 6 || month === 7 || month === 8;
-  const isWeekend = day === 5 || day === 6;
-
-  // T6/T7 ngày thường có thể được gán giá riêng (weekend_fri/weekend_sat) --
-  // ưu tiên hơn tier "weekend" gộp nếu chủ nhà đã tách; không có thì rơi về
-  // weekend gộp như cũ, property nào chưa tách vẫn hoạt động y hệt trước đây.
-  if (!isSummer) {
-    const specificKey = day === 5 ? 'weekend_fri' : day === 6 ? 'weekend_sat' : null;
-    if (specificKey) {
-      const specific = pricingData.find(p => p.tier_key === specificKey);
-      if (specific) return specific.price;
-    }
-  }
-
-  const tierKey = isSummer
-    ? (isWeekend ? 'summer_weekend' : 'summer_weekday')
-    : (isWeekend ? 'weekend' : 'weekday');
-
-  const match = pricingData.find(p => p.tier_key === tierKey);
+  const weekday = isoWeekday(date);
+  const match = pricingData.find(p => !p.start_date && matchesRecurring(p, month, weekday));
   return match ? match.price : null;
 }
 
@@ -370,7 +369,7 @@ async function loadPricing() {
   const el = document.getElementById('priceContent');
   try {
     const prices = await api(
-      'pricing?select=label,description,price,sort_order,tier_key,start_date,end_date' +
+      'pricing?select=label,description,price,sort_order,tier_key,start_date,end_date,months,weekdays' +
       '&property_id=eq.' + propId +
       '&order=sort_order'
     );
