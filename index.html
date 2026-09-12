@@ -22,9 +22,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a1a2e;mi
 .dow-row,.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .dow-row{margin-bottom:6px}
 .dow{text-align:center;font-size:11px;font-weight:700;color:#999;padding:4px 0}
-.day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:default}
+.day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:default;line-height:1.1;gap:1px}
 .day.today{box-shadow:0 0 0 2px #1a3c2e}
 .day.free{background:#f0fdf4}
+.day .dprice{font-size:8px;font-weight:700;color:#16a34a;opacity:.9}
 .legend{display:flex;gap:10px;margin-top:12px;font-size:11px;color:#666;justify-content:center;flex-wrap:wrap}
 .leg{display:flex;align-items:center;gap:4px}
 .ldot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
@@ -190,6 +191,42 @@ function fmtMoney(n) {
   return Number(n).toString().replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g,'$1.') + '₫';
 }
 
+// Dạng gọn cho hiện trên ô lịch nhỏ, vd 2.500.000 -> "2.5tr", 500.000 -> "500k"
+function fmtMoneyShort(n) {
+  n = Number(n);
+  if (!n) return '';
+  if (n >= 1000000) {
+    const tr = n / 1000000;
+    return (Number.isInteger(tr) ? tr : tr.toFixed(1)) + 'tr';
+  }
+  if (n >= 1000) return Math.round(n / 1000) + 'k';
+  return String(n);
+}
+
+// Giá áp dụng cho 1 ngày cụ thể, theo đúng logic BookingForm.tsx bên qt-villa-web
+// (findHolidayPrice + tier_key) -- ngày lễ khai báo start_date/end_date luôn ưu
+// tiên trước, sau đó mới tới tier weekday/weekend/summer_weekday/summer_weekend.
+function priceForDate(date) {
+  const iso = date.getFullYear() + '-' +
+    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+    String(date.getDate()).padStart(2, '0');
+
+  const holiday = pricingData.find(p =>
+    p.start_date && p.end_date && iso >= p.start_date && iso <= p.end_date);
+  if (holiday) return holiday.price;
+
+  const day = date.getDay(); // 0=CN ... 5=T6, 6=T7
+  const month = date.getMonth() + 1;
+  const isSummer = month === 6 || month === 7 || month === 8;
+  const isWeekend = day === 5 || day === 6;
+  const tierKey = isSummer
+    ? (isWeekend ? 'summer_weekend' : 'summer_weekday')
+    : (isWeekend ? 'weekend' : 'weekday');
+
+  const match = pricingData.find(p => p.tier_key === tierKey);
+  return match ? match.price : null;
+}
+
 // ─── Parse JSONB arrays từ Supabase ────────────────────────
 // amenities → string[]
 function parseAmenities(raw) {
@@ -321,7 +358,7 @@ async function loadPricing() {
   const el = document.getElementById('priceContent');
   try {
     const prices = await api(
-      'pricing?select=label,description,price,sort_order' +
+      'pricing?select=label,description,price,sort_order,tier_key,start_date,end_date' +
       '&property_id=eq.' + propId +
       '&order=sort_order'
     );
@@ -440,10 +477,13 @@ function renderCal() {
       style = `background:${entry.bg};color:${entry.color};` +
               (entry.border ? `border:1px solid ${entry.border};` : '');
     } else if (isBlocked) {
-      style = 'background:#e5e7eb;color:#9ca3af;flex-direction:column;line-height:1.1;';
+      style = 'background:#e5e7eb;color:#9ca3af;';
       content = `${day}<span style="font-size:8px">✕</span>`;
     } else {
       cls += ' free';
+      const price = priceForDate(new Date(calYear, calMonth, day));
+      const priceLabel = price ? fmtMoneyShort(price) : 'Liên hệ';
+      content = `${day}<span class="dprice">${priceLabel}</span>`;
     }
     if (isT) cls += ' today';
     h += `<div class="${cls}" style="${style}">${content}</div>`;
