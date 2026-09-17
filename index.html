@@ -159,6 +159,11 @@ let propInfo          = null;
 let pricingData       = [];
 let externalBookings  = [];
 let blockedDates      = new Set();
+// Chặn chéo hiển thị cho sale: nếu property đang xem là villa (room_role
+// whole_villa), tải thêm occupancy của 5 phòng lẻ con để cảnh báo ngay
+// trên lịch villa những ngày phòng lẻ đã có khách (dù villa vẫn trống).
+let roomSiblings      = []; // [{id, room_type: 'don'|'doi'}]
+let roomOccByDay      = new Map(); // ngày trong tháng -> {don:Set(propertyId), doi:Set(propertyId)}
 let calMonth = new Date().getMonth();
 let calYear  = new Date().getFullYear();
 
@@ -278,7 +283,7 @@ async function load() {
     const [props, bks] = await Promise.all([
       // Lấy đủ tất cả field kể cả 3 field mới
       api('properties?id=eq.' + propId +
-          '&select=id,name,address,phone,contact_name,checkin_time,checkout_time,rules,amenities,distances,extra_services,blocked_dates'),
+          '&select=id,name,address,phone,contact_name,checkin_time,checkout_time,rules,amenities,distances,extra_services,blocked_dates,room_role'),
       api('bookings?property_id=eq.' + propId +
           '&select=checkin_date,checkout_date&order=checkin_date')
     ]);
@@ -345,8 +350,8 @@ async function load() {
     // ── Blocked dates ──
     blockedDates = new Set(parseBlockedDates(propInfo.blocked_dates));
 
-    // ── Tải bảng giá & external bookings song song ──
-    await Promise.all([loadPricing(), loadExternalBookings()]);
+    // ── Tải bảng giá, external bookings & occupancy phòng lẻ song song ──
+    await Promise.all([loadPricing(), loadExternalBookings(), loadRoomSplit()]);
     renderCal();
 
   } catch (e) {
@@ -413,6 +418,55 @@ async function loadExternalBookings() {
   } catch (_) { externalBookings = []; }
 }
 
+// ─── Occupancy 5 phòng lẻ (chỉ tải khi property đang xem là villa mẹ) ──
+async function loadRoomSplit() {
+  if (!propInfo || propInfo.room_role !== 'whole_villa') {
+    roomSiblings = []; roomOccByDay = new Map(); return;
+  }
+  try {
+    if (!roomSiblings.length) {
+      roomSiblings = await api(
+        'properties?select=id,room_type&parent_villa_id=eq.' + propId);
+    }
+    if (!roomSiblings.length) { roomOccByDay = new Map(); return; }
+
+    const ids = roomSiblings.map(r => r.id).join(',');
+    const nextM = calMonth === 11 ? 0   : calMonth + 1;
+    const nextY = calMonth === 11 ? calYear + 1 : calYear;
+    const start = calYear + '-' + String(calMonth + 1).padStart(2,'0') + '-01';
+    const end   = nextY  + '-' + String(nextM   + 1).padStart(2,'0') + '-01';
+
+    const [rBookings, rExternal] = await Promise.all([
+      api('bookings?select=property_id,checkin_date,checkout_date' +
+          '&property_id=in.(' + ids + ')' +
+          '&checkin_date=lt.' + end + '&checkout_date=gt.' + start),
+      api('external_bookings?select=property_id,checkin_date,checkout_date' +
+          '&property_id=in.(' + ids + ')' +
+          '&checkin_date=lt.' + end + '&checkout_date=gt.' + start),
+    ]);
+
+    const typeById = {};
+    roomSiblings.forEach(r => { typeById[r.id] = r.room_type; });
+
+    const byDay = new Map();
+    [...rBookings, ...rExternal].forEach(b => {
+      const type = typeById[b.property_id];
+      if (type !== 'don' && type !== 'doi') return;
+      let d = new Date(b.checkin_date);
+      const co = new Date(b.checkout_date);
+      while (d < co) {
+        if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
+          const day = d.getDate();
+          if (!byDay.has(day)) byDay.set(day, { don: new Set(), doi: new Set() });
+          byDay.get(day)[type].add(b.property_id);
+        }
+        d.setDate(d.getDate() + 1);
+      }
+    });
+    roomOccByDay = byDay;
+  } catch (_) { roomOccByDay = new Map(); }
+}
+
 // ─── Calendar ──────────────────────────────────────────────
 function getOcc() {
   const occ = new Map();
@@ -436,6 +490,34 @@ function getOcc() {
     }
   });
   return occ;
+}
+
+// Danh sách chi tiết đơn/đôi cho những ngày phòng lẻ có khách trong tháng
+// đang xem — ô lịch chỉ đủ chỗ hiện tổng số (🏠N), chi tiết đơn/đôi nằm ở
+// đây để sale đọc kèm mà không cần chạm vào từng ngày.
+function buildRoomSplitDetail(occ, blockedSet) {
+  if (!roomSiblings.length || !roomOccByDay.size) return '';
+  const donTotal = roomSiblings.filter(r => r.room_type === 'don').length;
+  const doiTotal = roomSiblings.filter(r => r.room_type === 'doi').length;
+
+  // Chỉ liệt kê ngày villa còn trống — villa đã có khách/bảo trì thì phòng
+  // lẻ bận hay không không còn quan trọng với sale nữa.
+  const days = [...roomOccByDay.keys()]
+    .filter(day => !occ.has(day) && !blockedSet.has(day))
+    .sort((a, b) => a - b);
+  if (!days.length) return '';
+  const rows = days.map(day => {
+    const e = roomOccByDay.get(day);
+    return `<div class="card-row">
+      <div class="key">${String(day).padStart(2,'0')}/${String(calMonth+1).padStart(2,'0')}</div>
+      <div class="val">Đơn ${e.don.size}/${donTotal} · Đôi ${e.doi.size}/${doiTotal}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="card" style="margin-top:12px">
+    <div class="card-header" style="background:#ea580c">🏠 Phòng lẻ đã có khách tháng này (villa vẫn trống)</div>
+    ${rows}
+  </div>`;
 }
 
 function renderCal() {
@@ -492,9 +574,15 @@ function renderCal() {
       content = `${day}<span style="font-size:8px">✕</span>`;
     } else {
       cls += ' free';
-      const price = priceForDate(new Date(calYear, calMonth, day));
-      const priceLabel = price ? fmtMoneyShort(price) : 'Liên hệ';
-      content = `${day}<span class="dprice">${priceLabel}</span>`;
+      const rsplit = roomOccByDay.get(day);
+      const roomCount = rsplit ? rsplit.don.size + rsplit.doi.size : 0;
+      if (roomCount > 0) {
+        content = `${day}<span class="dprice" style="color:#ea580c">🏠${roomCount}</span>`;
+      } else {
+        const price = priceForDate(new Date(calYear, calMonth, day));
+        const priceLabel = price ? fmtMoneyShort(price) : 'Liên hệ';
+        content = `${day}<span class="dprice">${priceLabel}</span>`;
+      }
     }
     if (isT) cls += ' today';
     h += `<div class="${cls}" style="${style}">${content}</div>`;
@@ -508,7 +596,9 @@ function renderCal() {
       <div class="leg"><div class="ldot" style="background:#f0fdf4;border:1px solid #86efac"></div>Trống</div>
       <div class="leg"><div class="ldot" style="background:#e5e7eb"></div>Bảo trì</div>
       <div class="leg"><div class="ldot" style="background:white;box-shadow:0 0 0 2px #1a3c2e"></div>Hôm nay</div>
+      ${roomSiblings.length ? `<div class="leg"><div class="ldot" style="background:white;color:#ea580c;font-size:10px;display:flex;align-items:center;justify-content:center">🏠</div>Phòng lẻ có khách (villa vẫn trống)</div>` : ''}
     </div>
+    ${buildRoomSplitDetail(occ, blockedSet)}
     <div class="stats-row">
       <div class="stat"><div class="n" style="color:#e63946">${occ.size}</div><div class="l">Đã đặt</div></div>
       <div class="stat"><div class="n" style="color:#16a34a">${dim - occ.size - blockedSet.size}</div><div class="l">Còn trống</div></div>
@@ -534,11 +624,11 @@ function renderCal() {
 
 function prevM() {
   calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-  loadExternalBookings().then(() => renderCal());
+  Promise.all([loadExternalBookings(), loadRoomSplit()]).then(() => renderCal());
 }
 function nextM() {
   calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-  loadExternalBookings().then(() => renderCal());
+  Promise.all([loadExternalBookings(), loadRoomSplit()]).then(() => renderCal());
 }
 
 // ─── Copy buttons ──────────────────────────────────────────
