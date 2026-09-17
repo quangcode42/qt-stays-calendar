@@ -515,7 +515,7 @@ function buildRoomSplitDetail(occ, blockedSet) {
   }).join('');
 
   return `<div class="card" style="margin-top:12px">
-    <div class="card-header" style="background:#ea580c">🏠 Phòng lẻ đã có khách tháng này (villa vẫn trống)</div>
+    <div class="card-header" style="background:#ea580c">🏠 Ngày bên dưới đã có khách phòng — Không nhận nguyên căn</div>
     ${rows}
   </div>`;
 }
@@ -596,7 +596,7 @@ function renderCal() {
       <div class="leg"><div class="ldot" style="background:#f0fdf4;border:1px solid #86efac"></div>Trống</div>
       <div class="leg"><div class="ldot" style="background:#e5e7eb"></div>Bảo trì</div>
       <div class="leg"><div class="ldot" style="background:white;box-shadow:0 0 0 2px #1a3c2e"></div>Hôm nay</div>
-      ${roomSiblings.length ? `<div class="leg"><div class="ldot" style="background:white;color:#ea580c;font-size:10px;display:flex;align-items:center;justify-content:center">🏠</div>Phòng lẻ có khách (villa vẫn trống)</div>` : ''}
+      ${roomSiblings.length ? `<div class="leg"><div class="ldot" style="background:white;color:#ea580c;font-size:10px;display:flex;align-items:center;justify-content:center">🏠</div>Phòng lẻ bận — không nhận nguyên căn</div>` : ''}
     </div>
     ${buildRoomSplitDetail(occ, blockedSet)}
     <div class="stats-row">
